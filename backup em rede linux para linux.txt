@@ -1,0 +1,261 @@
+Para montar uma unidade de rede no Linux Debian ou Ubuntu e fazer backup de dados, você pode seguir os seguintes passos:
+
+1 - Certifique-se de que o pacote "cifs-utils" esteja instalado. Você pode verificar isso executando o seguinte comando no terminal:
+
+-------------------------------------------------------------------------------------
+sudo apt-get update
+sudo apt-get install cifs-utils -y
+-------------------------------------------------------------------------------------
+
+2 - Crie um diretório para montar a unidade de rede. 
+Por exemplo, você pode criar um diretório chamado "rede" em "/mnt" executando o seguinte comando:
+
+-------------------------------------------------------------------------------------
+sudo mkdir /mnt/backup
+-------------------------------------------------------------------------------------
+
+3 - Crie um arquivo oculto com um editor de texto, como o nano, dentro da pasta /home/usuario chamado .smbcredentials (Lembre de trocar o "/usuario" pelo seu usuário)
+
+-------------------------------------------------------------------------------------
+sudo nano /home/usuario/.smbcredentials
+-------------------------------------------------------------------------------------
+
+4 - Com arquivo aberto, adicione seu nome de usuário e senha para acessar o compartilhamento remoto
+
+-------------------------------------------------------------------------------------
+username=usuario
+password=senha123
+-------------------------------------------------------------------------------------
+
+5 - Execute o comando abaixo para obter o seu gid e uid, substituindo o nome abaixo pelo do seu usuário e anote-o em um local seguro.
+
+-------------------------------------------------------------------------------------
+id usuario
+-------------------------------------------------------------------------------------
+
+6 - Faça uma cópia do arquivo "fstab" na mesma para de origem com o nome "fstab.bkp". 
+Caso o arquivo que está editando dê problemas, volte renomeio o arquivo original.
+
+-------------------------------------------------------------------------------------
+cp /etc/fstab /etc/fstab.bkp
+-------------------------------------------------------------------------------------
+
+7 - Abra o arquivo "/etc/fstab" com um editor de texto, como o nano:
+
+-------------------------------------------------------------------------------------
+sudo nano /etc/fstab
+-------------------------------------------------------------------------------------
+
+8 - Adicione uma nova linha no final do arquivo "/etc/fstab" usando o seguinte formato:
+
+-------------------------------------------------------------------------------------
+# montando unidade de rede
+//192.168.0.1/compartilhamento /mnt/backup cifs credentials=/home/usuario/.smbcredentials,iocharset=utf8,gid=1000,uid=1000,file_mode=0777,dir_mode=0777,rw,noauto 0 0
+-------------------------------------------------------------------------------------
+
+9 - Instruções 
+  9.1 Substitua //192.168.0.1/compartilhamento pelo endereço IP ou nome do host e nome da pasta compartilhada da unidade de rede. 
+  9.2 Substitua /mnt/backup pelo diretório que você criou na etapa 2. 
+  9.3 Adicione o tipo de sistemas de arquivos, sendo o padrão cifs. Exite o nfs também
+  9.4 Substitua credentials pelo caminho completo para um arquivo contendo as credenciais para acessar a unidade de rede (por exemplo, /home/usuario/.smbcredentials).
+  9.5 Adicione a entrada iocharset=utf8 que é o conjunto de caracteres para exibição
+  9.6 Substitua uid=1000 pelo ID numérico de usuário e gid=1000 grupo do usuário que acessará a unidade de rede. (Passo 5)
+  9.7 Adicione as permissões para o arquivo file_mode=0777 e para o diretório dir_mode=0777    
+  9.8 Adicione, a opção "rw" indica que a unidade deve ser montada como leitura-gravação
+  9.9 A opção "noauto" significa que não preciso digitar o comando "mount –a" toda vez que o sistema for reiniciado. Cuidado ao fazer o arquivo de backup, explicação no próximo passo.
+  9.10 O primeiro 0 (zero) é da opção dump, que especifica a frequência de backup feita com o programa dump no sistema de arquivos. 0 desativa o backup. O segundo 0 (zero) é a Ordem que será executado nos sistemas de arquivos. Assim, serão verificados na inicialização do sistema. Se usar 0, o sistema de arquivos não é verificado. O sistema de arquivos raíz que deverá ser verificado primeiro é o raíz "/" (a não ser quevocê tenha um sistema de arquivos de outro tipo que não é montado dentro do diretório raíz e possui seu suporte embutido no kernel).
+
+10 - Salve e saia do arquivo: Pressione Ctrl+O para salvar as alterações e Ctrl+X para sair do editor de texto nano.
+
+11 - Monte a unidade de rede executando o seguinte comando: Lembrando que o diretório deverá ser igual no passo 2
+
+-------------------------------------------------------------------------------------
+sudo mount /mnt/backup/
+-------------------------------------------------------------------------------------
+
+12 - Para verificar se a unidade foi montada corretamente, utilize o comando:
+
+-------------------------------------------------------------------------------------
+sudo df
+-------------------------------------------------------------------------------------
+
+13 - Para desmontar utilize o seguinte comando:
+
+-------------------------------------------------------------------------------------
+sudo umount /mnt/backup/
+-------------------------------------------------------------------------------------
+
+14 - Vamos montar nosso script de backup. Crie um diretório dentro de "/etc/backup/"
+
+-------------------------------------------------------------------------------------
+sudo mkdir /etc/backup/
+-------------------------------------------------------------------------------------
+
+15 - Agora, crie um arquivo chamado "backup.sh" com o seguinte comando:
+
+-------------------------------------------------------------------------------------
+sudo nano /etc/backup/backup.sh
+-------------------------------------------------------------------------------------
+
+16 - O código do backup.sh está aqui para download. Faça os ajustes necessários e verfique o caminho das pastas e não se esqueça de criar a pasta para log em /var/backup
+
+*DOWNLOAD
+
+17 - Torne o arquivo backup.sh executável: Lembrando que você deve estar dentro da pasta que criou o arquivo "backup.sh" (/etc/backup)
+
+-------------------------------------------------------------------------------------
+sudo chmod +x backup.sh
+-------------------------------------------------------------------------------------
+
+18 - Se preferir, teste o arquivo backup.sh executando-o manualmente, se não pule para a próxima etapa
+
+-------------------------------------------------------------------------------------
+sudo ./backup.sh
+-------------------------------------------------------------------------------------
+
+19 - Criaremos um arquivo dentro do diretório "CRON.D". Para isso, utilizaremos o seguinte comando:
+
+-------------------------------------------------------------------------------------
+sudo nano /etc/cron.d/backup
+-------------------------------------------------------------------------------------
+
+20 - Dentro do arquivo backup em /etc/cron.d/, incluiremos a seguinte linha
+
+-------------------------------------------------------------------------------------
+#
+0 0 * * * root /etc/backup/backup.sh
+-------------------------------------------------------------------------------------
+
+21 - Isso executará o arquivo backup.sh todos os dias à meia-noite (00:00). Você pode alterar a hora modificando os dois primeiros campos da linha (minuto e hora) em um formato cron.
+
+22 - Explicando: 
+
+*   *   *   *   *
+1º  2º  3º  4º  5º
+
+1º * - minutos (0-59)
+2º * - horas (0-23)
+3º * - dia do mês (1-31)
+4º * - mês (1-12)
+5º * - dia da semana (0-7)
+
+Confira esse link que mostra mais detalhes
+https://www.hostinger.com.br/tutoriais/cron-job-guia
+
+23 - Salve e feche o arquivo cron de configuração.
+
+24 - Agora, o arquivo backup.sh será executado todos os dias no horário especificado, criando um novo backup e mantendo apenas as 5 últimas cópias salvas no diretório de destino.
+
+25 - Vamos configurar agora o envio de e-mail após o backup ser concluído. Para isso, vamos utilizar o "SSMTP". Utilizamos o seguinte comando para instalar
+
+-------------------------------------------------------------------------------------
+sudo apt-get install ssmtp -y
+-------------------------------------------------------------------------------------
+
+26 - Vamos instalar o comando mail para que o envio de mensagem seja feito com sucesso. Para isso, vamos utilizar o "MailUtils"
+
+-------------------------------------------------------------------------------------
+sudo apt-get install mailutils -y
+-------------------------------------------------------------------------------------
+
+27 - Com o "ssmtp" e o "mailutils" instalado, configuramos o arquivo "ssmtp.conf" que fica no diretório "/etc/ssmtp/". Antes, faça uma cópia de backup do arquivo "ssmtp.conf" para que, caso de erro em algo, podemos voltar o arquivo original. Para fazer backup do arquivo, utilizamos o comando:
+
+-------------------------------------------------------------------------------------
+cp /etc/ssmtp/ssmtp.conf /etc/ssmtp/ssmtp.conf.bkp
+-------------------------------------------------------------------------------------
+
+27.1 - Editando o arquivo ssmtp.conf
+
+-------------------------------------------------------------------------------------
+nano /etc/ssmtp/ssmtp.conf
+-------------------------------------------------------------------------------------
+
+27.2 - Incluieremos as seguintes linhas
+
+-------------------------------------------------------------------------------------
+TLS_CA_FILE=/etc/pki/tls/certs/ca-bundle.crt
+root=seu-email@seu-provedor.com.br
+mailhub=imap.seu-provedor.com.br:porta #geralmente 587 ou 465
+hostname=nome-do-seu-servidor
+AuthUser=seu-email@seu-provedor.com.br
+AuthPass=senha-do-email
+FromLineOverride=YES
+UseSTARTTLS=YES
+-------------------------------------------------------------------------------------
+
+27.3 - Para fazermos um teste, crie um arquivo em um diretório qualquer e entre nele. Utilizamos os seguinte comandos
+
+-------------------------------------------------------------------------------------
+cd /etc/backup
+nano test.txt
+-------------------------------------------------------------------------------------
+
+27.4 - Dentro do arquivo test.txt, insira o texto que quiser. Pode ser como o texto abaixo
+
+-------------------------------------------------------------------------------------
+Ola, esse é um teste de e-mail.
+Se tudo estiver corretamente certo, irei receber este e-mail.
+Grato, eu!
+-------------------------------------------------------------------------------------
+
+27.5 - Salve o arquivo utilizando as teclas CTRL+O, aperte a tecla ENTER para salvar, e saia do nano apertando CTRL+X.
+
+28 - Faça um teste de envio de e-mail utilizando o comando abaixo
+
+-------------------------------------------------------------------------------------
+ssmtp -v seu-email@gmail.com < test.txt
+-------------------------------------------------------------------------------------
+
+29 - Para anexar o último arquivo de log no envio de e-mail no ssmtp, você pode utilizar o comando uuencode para codificar o arquivo e incluí-lo no corpo do email.
+Para fazer isso, siga os seguintes passos:
+
+Crie um arquivo de log do seu backup e salve-o em um diretório específico. Por exemplo,
+
+-------------------------------------------------------------------------------------
+nano /var/log/meu_backup.log
+-------------------------------------------------------------------------------------
+
+29.1 - Podemos utilizar os arquivos já existentes também. Fica seu critério
+
+30 - Observação: é importante lembrar que o "uuencode" é uma ferramenta antiga e pode não estar presente em todas as distribuições do Linux. Se o uuencode não estiver instalado, você pode instalá-lo usando o gerenciador de pacotes da sua distribuição. Por exemplo, no Debian ou no Ubuntu, você pode instalar o pacote sharutils usando o seguinte comando:
+
+-------------------------------------------------------------------------------------
+sudo apt-get install sharutils -y
+-------------------------------------------------------------------------------------
+
+31 - Modifique seu script de backup para incluir o seguinte comando logo após o comando de backup para anexar o arquivo de log ao e-mail:
+
+-------------------------------------------------------------------------------------
+uuencode /var/log/meu_backup.log meu_backup.log | mail -s "Assunto do email" meu-email@gmail.com
+-------------------------------------------------------------------------------------
+
+32 - Para configurar o ssmtp para enviar um e-mail de erro, siga os seguintes passos:
+Abra o arquivo "/etc/ssmtp/ssmtp.conf" com um editor de texto e adicione a seguinte linha:
+
+-------------------------------------------------------------------------------------
+ErrorMail=<seu_endereço_de_email>
+-------------------------------------------------------------------------------------
+
+32.1 - Substitua <seu_endereço_de_email> pelo endereço de e-mail para o qual você deseja enviar os erros.
+
+33 - No seu script de backup, adicione o seguinte comando para capturar a saída de erro do comando de backup e enviar um e-mail de erro caso ocorra um erro:
+
+-------------------------------------------------------------------------------------
+# Envio do email
+if [ -s /tmp/erro_backup.txt ]
+then
+  mail -s "Erro no backup em $(date +%Y-%m-%d)" -e <seu_endereço_de_email> < /tmp/erro_backup.txt
+else
+  cat /backup/arquivo_backup.tar.gz | mail -s "Backup realizado em $(date +%Y-%m-%d)" meu_email@gmail.com
+fi
+-------------------------------------------------------------------------------------
+
+33.1 - Substitua <seu_endereço_de_email> pelo endereço de e-mail para o qual você deseja enviar os erros e meu_email@gmail.com pelo endereço de e-mail para o qual você deseja enviar o backup.
+
+34 - Salve e execute o seu script de backup. Caso ocorra um erro, você receberá um e-mail com a saída de erro do comando de backup.
+
+
+
+
+
+
