@@ -1,19 +1,17 @@
 #!/bin/bash
-#2023-04-14
-#2023-06-05
 
 ##################################################################
 #                     DEFINIÇÃO DAS VARIÁVEIS                    #
 ##################################################################
 
 # E-mail de destino para envio do log do backup
-email_destination="informatica@materdeiapucarana.com.br"
+email_destination="info@seuemail.com"
 
 # Obtém a utilização atual do disco - depois do df -h vem a unidade para verificar
 #uso=$(df -h /backup | awk '{print $5}' | tail -n 1 | cut -d'%' -f1)
 
 # Defina aqui o limite de utilização do disco
-limit=85
+limit=80
 
 # Formato de data
 date_format=$(date "+%Y-%m-%d--%H-%M-%S")
@@ -25,7 +23,7 @@ external_log="/var/hd"
 log_file="/var/hd/$date_format-backup.log"
 
 # Dias de arquivos de backup para serem removidos
-time=15
+dias_exclusao=15
 
 #Assunto do e-mail
 email_subject="Alerta de capacidade de HD."
@@ -82,4 +80,4 @@ if [ ! -d "$external_log" ]; then
   exit 1
 fi
 
-find "$external_log"/*.log -mtime +$time -exec rm -f {} \;
+find "$external_log"/*.log -mtime +$dias_exclusao -exec rm -r {} \;
