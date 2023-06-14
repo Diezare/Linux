@@ -1,0 +1,167 @@
+01 - Iniciaremos a instalação dos utilitários 
+
+---------------------------------------
+apt install vim sudo curl -y
+---------------------------------------
+
+02 - Vamos baixar o Zabbix 6.4
+
+---------------------------------------
+wget https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
+---------------------------------------
+
+03 - Instalar o zabbix em nosso repositório
+
+---------------------------------------
+apt install ./zabbix-release_6.4-1+ubuntu22.04_all.deb
+---------------------------------------
+
+04 - Atualizar o sistema
+
+---------------------------------------
+apt update && apt upgrade
+---------------------------------------
+
+05 - Instalar o banco de dados
+
+---------------------------------------
+apt install postgresql postgresql-contrib -y
+---------------------------------------
+
+06 - Acessamos o usuario postgress
+
+---------------------------------------
+su - postgres
+---------------------------------------
+
+07 - Acessamos o banco
+
+---------------------------------------
+psql
+---------------------------------------
+
+08 - Definimos uma senha de root para o banco de dados
+
+---------------------------------------
+\password postgres
+---------------------------------------
+e informar a senha
+
+a senha foi definida foi "2206"
+
+09 - Para sair do banco 
+
+---------------------------------------
+\q e depois exit
+---------------------------------------
+
+10 - Agora ajustamos no arquivo ph_hba.conf do Postgres para que qualquer alteração no banco, seja solicitada a senha que acabamos de definir 
+
+---------------------------------------
+nano /etc/postgresql/14/main/pg_hba.conf
+---------------------------------------
+
+11 - Vamos alterar algumas linhas
+
+---------------------------------------
+#Localize as seguintes linhas:
+local all postgres peer
+local all all peer
+
+#Altere "peer" para "md5"
+local all postgres md5
+local all all md5
+---------------------------------------
+
+12 - Com as alterações feitas, reiniaremos o banco de dados
+
+---------------------------------------
+systemctl restart postgresql
+---------------------------------------
+
+13 - Agora vamos instalar o Zabbix Server com os pacotes abaixo
+
+---------------------------------------
+apt install zabbix-server-pgsql php-pgsql zabbix-sql-scripts zabbix-agent -y
+---------------------------------------
+
+14 - Vamos criar o usuario e senha do zabbix no postgres
+
+---------------------------------------
+su - postgres
+createuser --pwprompt zabbix
+---------------------------------------
+
+o --pwprompt já cria uma usuario com senha
+
+usuário e senha aqui serão "zabbix"
+
+A primeira senha é a que iremos criar do banco de dados
+A segunda senha é a repetição da senha criada para o banco de dados
+A terceira senha é a do banco de dados, que no caso é "dc"
+
+15 - Criaremso agora o banco de dados do Zabbix. Irá solicitar a senha do Postgres. 
+
+---------------------------------------
+createdb -O zabbix zabbix
+inserir a senha do root do postgres "dc"
+---------------------------------------
+
+16 - No host do servidor Zabbix, importe o esquema e os dados iniciais. Você será solicitado a inserir sua senha recém-criada.
+
+---------------------------------------
+zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | psql -U zabbix -d zabbix &>/dev/null
+---------------------------------------
+procurar por este aquivo server.sql.gz, pode ser que esteja em outra pasta como
+zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz
+
+17 - Sair do banco
+
+---------------------------------------
+exit
+---------------------------------------
+
+18 - Após isso, adicionamos nossa senha do usuário Zabbix no arquivo de configuração. 
+Procure por #DBPassword= descomente e adicione a sua senha
+
+---------------------------------------
+nano /etc/zabbix/zabbix_server.conf
+---------------------------------------
+
+19 - Com as alterações feitas, reiniaremos o zabbix
+
+---------------------------------------
+systemctl restart zabbix-server.service
+---------------------------------------
+
+20 - Agora vem a instalação do frontend
+
+---------------------------------------
+apt install nginx zabbix-frontend-php zabbix-nginx-conf php-fpm -y
+---------------------------------------
+tambem poderia instalar tudo junto com o passo 13
+
+apt install zabbix-server-pgsql zabbix-frontend-php php8.1-pgsql zabbix-nginx-conf zabbix-sql-scripts zabbix-agent
+
+21 - Agora, ajustamos o arquivo de configuração web do Zabbix.
+Editando o arquivo de configuração WEB do Zabbix
+
+---------------------------------------
+nano /etc/nginx/conf.d/zabbix.conf
+---------------------------------------
+
+22 - Descomente a linha "listen" para caso queira alterar a porta de acesso WEB do Zabbix, por padrão é a porta 80 e descomente a linha "server_name" e adicione o IP do seu servidor.
+
+---------------------------------------
+server {
+	listen 80; 
+	server_name X.X.X.X;
+---------------------------------------
+
+23 - Agora reiniciamos nossos serviços
+
+---------------------------------------
+systemctl restart postgresql nginx zabbix-server.service
+---------------------------------------
+
+24 - Agora é visual, vamos no navegador para verificar se o nosso zabbix está funcionando

@@ -1,0 +1,225 @@
+01 - Instalar o mdadm
+
+---------------------------------------------------
+sudo apt install mdadm
+---------------------------------------------------
+
+02 - Para ver os discos instalados
+
+---------------------------------------------------
+lsblk –f
+---------------------------------------------------
+
+03 - Irá aparecer os disco. Se aparecer, por exemplo: sdb e sdc apenas, representa que não tem partições nesses discos
+
+04 - Para visualizar se existe blocos nos discos, podemos utilizar o comando
+
+---------------------------------------------------
+mdadm --examine /dev/sd[b-c]
+---------------------------------------------------
+
+05 - Dessa forma, vamos utilizar o comando fdisk para criar duas partições em cada um desses dispositivos. Acompanhe o processo de criação no dispositivo /dev/sdb:
+
+---------------------------------------------------
+fdisk /dev/sdb
+---------------------------------------------------
+---------------------------------------------------
+apertar a letra "n" para criar uma nova partição
+---------------------------------------------------
+---------------------------------------------------
+apertar a letra "p" para criar uma partição primária
+---------------------------------------------------
+---------------------------------------------------
+digitar o número 1
+---------------------------------------------------
+---------------------------------------------------
+apertar a tecla ENTER
+---------------------------------------------------
+---------------------------------------------------
+escolher o tamanho da partição, exemplo, se for
+5GB digitar "+5G"
+---------------------------------------------------
+
+06 - Verificar o modo da partição apertando a tecla "p"
+
+07 - Precisamos alterar o ID para FD, que em hexadecimal é 0xFD
+
+---------------------------------------------------
+apertar a tecla t
+---------------------------------------------------
+---------------------------------------------------
+seleciona a partição
+---------------------------------------------------
+---------------------------------------------------
+digitamos fd
+---------------------------------------------------
+
+08 - Verificar o modo da partição apertando a tecla "p"
+
+09 - Vamos criar a segunda partição (também de 5 GB)
+
+---------------------------------------------------
+apertar a letra "n" para criar uma nova partição
+---------------------------------------------------
+---------------------------------------------------
+apertar a letra "p" para criar uma partição primária
+---------------------------------------------------
+---------------------------------------------------
+apertar a tecla ENTER 2x
+---------------------------------------------------
+---------------------------------------------------
+escolher o tamanho da partição, exemplo, se for
+5GB digitar "+5G"
+---------------------------------------------------
+---------------------------------------------------
+altera o tipo para FD digitando "fd"
+---------------------------------------------------
+
+***se preferir volte no passo 07
+
+10 - Digitamos "w" para gravar as informações
+
+11 - Vamos verificar os discos criado com o comando 
+
+---------------------------------------------------
+fdisk 
+---------------------------------------------------
+
+12 - Repetimos o processo no disco /dev/sdc a a partir da etapa 05
+
+13 - Como as partições dos discos já foram preparadas para atuarem em um arranjo de RAID, se rodarmos novamente o comando mdadm junto à opção --examine sobre os discos, tais partições já são devidamente reconhecidas:  
+
+---------------------------------------------------
+mdadm --examine /dev/sd[b-c]
+---------------------------------------------------
+
+14 - Como ainda não fazem parte de um arranjo RAID, se aplicarmos o mesmo comando sobre as partições, também será exibida a mensagem de que nenhum superbloco md foi detectado:
+
+---------------------------------------------------
+mdadm --examine /dev/sd[b-c]
+---------------------------------------------------
+
+15 - Desta forma, vamos criar agora o nosso primeiro dispositivo de bloco md, que estará associado às primeiras partições de ambos os discos. 
+
+16 - RAID de nível 0. 
+
+---------------------------------------------------
+mdadm –C /dev/md0 --level=raid0 –n 2 /dev/sdb1 /dev/sdc1
+ou
+mdadm -C /dev/md0 --level=stripe -n 2 /dev/sdb1 /dev/sdc1
+---------------------------------------------------
+
+17 - A opção –C (ou --create) é para criar o dispositivo de bloco (md) a estar associado a este arranjo (neste exemplo, criamos o dispositivo /dev/md0).
+
+A partir da opção –l (ou --level), é possível estabelecer o nível de RAID  a ser configurado. Neste caso, estamos utilizando o nível 0 – mas também poderíamos utilizar a string "stripe" ou "0" no lugar de "raid0".
+
+O número de dispositivos a integrarem o arranjo é determinado pela opção –n (ou --raid-devices). Para finalizar, especificamos os dispositivos que irão participar do arranjo.
+
+18 - Ao executar o comando abaixo, já mostra o RAID 0 montado
+
+---------------------------------------------------
+mdadm --examine /dev/sd[b-c]
+---------------------------------------------------
+
+19 - Consultar o bloco que o kernel suporta de raid
+
+---------------------------------------------------
+cat /proc/mdstat
+---------------------------------------------------
+
+20 - Verificando o arranjo
+
+---------------------------------------------------
+mdadm -D /dev/md0   o -D é de --detail
+---------------------------------------------------
+
+21 - Vamos aplica o sistema de arquivos
+
+---------------------------------------------------
+mkfs.ext4 /dev/md0
+---------------------------------------------------
+
+22 - Para que as configurações de RAID sejam salvas, vamos utilizar o mdadm.conf que fica em
+
+---------------------------------------------------
+ls -l /etc/mdadm/mdadm.conf
+---------------------------------------------------
+
+23 - Para visualizar se tem algo dentro dele
+
+---------------------------------------------------
+cat /etc/mdadm/mdadm.conf
+---------------------------------------------------
+
+24 - Lançar conteúdo para ser registrado nele
+
+---------------------------------------------------
+mdadm --examine --scan --verbose > /etc/mdadm/mdadm.conf
+---------------------------------------------------
+
+---------------------------------------------------
+cat /etc/mdadm/mdadm.conf
+---------------------------------------------------
+
+25 - Em seguida, vamos rodar o comando update-initramfs junto à opção –u, de forma a atualizar a imagem initramfs do sistema (que será utilizada pelo kernel para a montagem do sistema de arquivos raiz inicial durante o boot, de forma a criar todo o mapeamento necessário aos dispositivos presentes no sistema):
+
+---------------------------------------------------
+update-initramfs -u
+---------------------------------------------------
+
+26 - Para verificar se está ativo
+
+---------------------------------------------------
+cat /proc/mdstat
+---------------------------------------------------
+
+27 - Para parar
+
+---------------------------------------------------
+mdadm -S /dev/md0
+---------------------------------------------------
+
+28 - Para ativar
+
+---------------------------------------------------
+mdadm -A -R /dev/md0
+---------------------------------------------------
+
+29 - Montamos o disco em um diretório
+
+---------------------------------------------------
+mount /dev/md0 /opt/exemplo
+---------------------------------------------------
+
+30 - RAID de nível 1. 
+
+---------------------------------------------------
+mdadm –C /dev/md1 --level=raid1 –n 2 /dev/sdb2 /dev/sdc2
+ou
+mdadm -C /dev/md1 --level=mirror -n 2 /dev/sdb2 /dev/sdc2
+---------------------------------------------------
+---------------------------------------------------
+yes
+---------------------------------------------------
+
+31 - Se formos utilizar na mesma unidade o RAID1, alteramos o nome do /dev/md, tipo de nível --level=raid1 e a partição /dev/sbd2 /dev/sdc2 por exemplo
+
+32 - Repetir os passos para formatar, passo 21
+
+33 - Podemos visualizar os discos em 
+
+---------------------------------------------------
+ls -l /dev/md*
+---------------------------------------------------
+
+34 - Lançar conteúdo para ser registrado nele
+
+---------------------------------------------------
+mdadm --detail --scan --verbose > /etc/mdadm/mdadm.conf
+---------------------------------------------------
+---------------------------------------------------
+cat /etc/mdadm/mdadm.conf
+---------------------------------------------------
+---------------------------------------------------
+update-initramfs -u
+---------------------------------------------------
