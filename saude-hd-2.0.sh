@@ -1,15 +1,14 @@
 #!/bin/bash
-#2023-06-06
 
 ##################################################################
 #                     DEFINIÇÃO DAS VARIÁVEIS                    #
 ##################################################################
 
 # Endereço de e-mail para envio de notificações
-email="informatica@materdeiapucarana.com.br"
+email="info@seuemail.com"
 
 # Formato de data
-date_format=$(date "+%Y-%m-%d--%H-%M-%S")
+date_format=$(date "+%Y-%m-%d-|-%H-%M-%S")
 
 # Nome do servidor
 hostname=$(hostname)
@@ -30,7 +29,7 @@ DISKS=$(lsblk -lpn -o NAME)
 FAIL_LOG="/var/saude/falha-$date_format.log"
 
 #Dias de arquivos de logs para ser removido
-time=15
+dias_exclusao=15
 
 ##################################################################
 #           VERIFICA SE O SMARTMONTOOLS ESTÁ INSTALADO           #
@@ -158,4 +157,4 @@ if [ ! -d "$external_log" ]; then
   exit 1
 fi
 
-find "$external_log"/*.log -mtime +$time -exec rm -f {} \;
+find "$external_log"/*.log -mtime +$dias_exclusao -exec rm -r {} \;
