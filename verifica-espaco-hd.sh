@@ -1,4 +1,13 @@
 #!/bin/bash
+#2023-06-06
+
+##################################################################
+#                           REFERÊNCIAS                          #
+##################################################################
+
+#Edmarcos Antonio de Souza - EDGE - http://www.edmarcos.com.br/
+#OpenIA - ChatGPT - https://chat.openai.com/chat
+#Adaptado por Diézare Conde - https://diezare.wordpress.com/
 
 ##################################################################
 #                     DEFINIÇÃO DAS VARIÁVEIS                    #
