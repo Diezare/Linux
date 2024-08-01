@@ -1,4 +1,10 @@
 #!/bin/bash
+#2022-09-09
+#2023-03-28
+#2023-04-04
+#2023-04-12
+#2023-06-19
+#2024-05-15
 
 ##################################################################
 #                           REFERÊNCIAS                          #
@@ -32,16 +38,16 @@ final_archive="$date_format-backup.tgz"
 log_file="/backup/$date_format-backup.log"
 
 # Dias de arquivos de backup para serem mantidos
-dias_manter_backup=3
+dias_manter_backup=7
 
 # Dias de arquivos de log para serem mantidos
-dias_manter_log=3
+dias_manter_log=7
 
 # Número máximo de backups a serem mantidos
-num_max_backups=3
+num_max_backups=7
 
 # E-mail de destino para envio do log do backup
-email_destination="email@seudestino.com"
+email_destination="seu@email.com"
 
 # Assunto do e-mail
 email_subject="Backup realizado em $date_format"
@@ -97,3 +103,7 @@ if [ -d "$external_log" ]; then
     find "$external_storage" -name "*.tgz" -mtime +$dias_manter_backup -exec rm -f {} +
     find "$external_log" -name "*.log" -mtime +$dias_manter_log -exec rm -f {} +
 fi
+
+##################################################################
+#              FIM DE ROTINA DE BACKUP AUTOMATIZADA              #
+##################################################################
