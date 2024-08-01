@@ -2,11 +2,19 @@
 #2023-06-06
 
 ##################################################################
+#                           REFERÊNCIAS                          #
+##################################################################
+
+#Edmarcos Antonio de Souza - EDGE - http://www.edmarcos.com.br/
+#OpenIA - ChatGPT - https://chat.openai.com/chat
+#Adaptado por Diézare Conde - https://diezare.wordpress.com/
+
+##################################################################
 #                     DEFINIÇÃO DAS VARIÁVEIS                    #
 ##################################################################
 
 # Endereço de e-mail para envio de notificações
-email="informatica@materdeiapucarana.com.br"
+email="seu@email.com"
 
 # Formato de data
 date_format=$(date "+%Y-%m-%d %H:%M:%S")
