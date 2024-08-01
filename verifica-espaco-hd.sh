@@ -87,3 +87,7 @@ if [ ! -d "$external_log" ]; then
 fi
 
 find "$external_log"/*.log -mtime +$dias_exclusao -exec rm -r {} \;
+
+##################################################################
+#              FIM DE ROTINA DE BACKUP AUTOMATIZADA              #
+##################################################################
